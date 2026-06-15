@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}智能增删改查助手 - {{ system_name }}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='assistant.css') }}">
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">智能增删改查助手</h1>
+        <p class="text-secondary mb-0">统一对话框支持自然语言查询、统计分析、多表联查和受控业务写操作，并展示 LangChain + DeepSeek 的统一 workflow。</p>
+    </div>
+    <div class="assistant-status-chip {% if ai_status.available %}is-ready{% else %}is-disabled{% endif %}">
+        {{ ai_status.message }}
+    </div>
+</div>
+
+{% if not ai_status.available %}
+<div class="alert alert-warning border-0 shadow-sm mb-4">
+    <div class="fw-semibold mb-1">智能助手暂不可用</div>
+    <div>{{ ai_status.message }} 页面仍可展示权限说明、示例问题和 AI workflow，但暂时不能发起真实对话。</div>
+</div>
+{% endif %}
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-sm-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <div class="section-kicker">当前用户</div>
+                <div class="h5 fw-bold mb-1">{{ current_user.employee_name }}</div>
+                <div class="text-secondary small">工号：{{ current_user.employee_id }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <div class="section-kicker">当前角色</div>
+                <div class="h5 fw-bold mb-1">{{ current_user.role_label }}</div>
+                <div class="text-secondary small">角色代码：{{ current_user.role }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <div class="section-kicker">所属部门</div>
+                <div class="h5 fw-bold mb-1">{{ assistant_context.department_name }}</div>
+                <div class="text-secondary small">权限上下文只来自服务器 session</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <div class="section-kicker">权限范围</div>
+                <div class="assistant-scope-copy">{{ assistant_context.scope_description }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="assistant-module mb-5">
+    <div class="row g-4 assistant-layout">
+        <div class="col-xl-4">
+            <div class="card border-0 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                        <div>
+                            <h2 class="h5 fw-bold mb-1">统一示例问题</h2>
+                            <p class="text-secondary mb-0">一个输入框统一支持查询、统计、分析和受控写操作。</p>
+                        </div>
+                        <span class="badge text-bg-light">unified</span>
+                    </div>
+
+                    <div class="assistant-example-group">
+                        <div class="assistant-example-group-title">查询示例（查）</div>
+                        <div class="assistant-example-list">
+                            {% for example in example_questions %}
+                            <button type="button" class="assistant-example-btn" data-target="unified" data-example="{{ example }}" {% if not ai_status.available %}disabled{% endif %}>
+                                {{ example }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="assistant-example-group mt-4">
+                        <div class="assistant-example-group-title">写操作示例（增 / 改 / 删）</div>
+                        <div class="assistant-example-list">
+                            {% for example in example_actions %}
+                            <button type="button" class="assistant-example-btn is-action" data-target="unified" data-example="{{ example }}" {% if not ai_status.available %}disabled{% endif %}>
+                                {{ example }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="assistant-rule-card mt-4">
+                        <div class="fw-semibold mb-2">统一交互规则</div>
+                        <ul class="mb-0">
+                            <li>系统会先自动判断本轮请求属于查询还是受控写操作，并在回答中显示 operation_type。</li>
+                            <li>复杂查询支持多表联查、嵌套查询和统计分析，真实查询由后端 SQLAlchemy 工具执行。</li>
+                            <li>写操作只允许映射到系统已有后台业务动作，不能直接生成 SQL 修改数据库。</li>
+                            <li>所有结果都按当前登录账号权限过滤，必要时会做脱敏和风险提示。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8">
+            <div
+                class="card border-0 assistant-chat-card"
+                id="assistant-unified-app"
+                data-mode="unified"
+                data-api-url="{{ url_for('ai.assistant_chat_api') }}"
+                data-enabled="{{ 'true' if ai_status.available else 'false' }}"
+            >
+                <div class="card-body p-0">
+                    <div class="assistant-chat-toolbar">
+                        <div>
+                            <div class="fw-semibold">统一对话窗口</div>
+                            <div class="small text-secondary">后端会先判断 operation_type，再分别走查询或写操作链路，并统一展示命令、风险和结果。</div>
+                        </div>
+                        <div class="small text-secondary">模型：{{ ai_status.model_name }}</div>
+                    </div>
+
+                    <div class="assistant-chat-window" id="assistant-unified-chat-window">
+                        <div class="assistant-message assistant-message-left">
+                            <div class="assistant-bubble assistant-bubble-assistant">
+                                <div class="assistant-message-text">我可以在同一个对话框里处理查询、统计分析和受控写操作。每次回答都会先显示 operation_type，再展示意图、受控命令、结构化结果和风险提示。</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="assistant-input-area">
+                        <div class="assistant-error alert alert-danger d-none mb-3" id="assistant-unified-error-box"></div>
+                        <form class="assistant-form" data-mode="unified">
+                            <textarea
+                                id="assistant-unified-input"
+                                class="form-control"
+                                rows="4"
+                                placeholder="例如：查询当前系统所有部门的工单健康状况，或把 TCKxxxx 分派给某位员工。"
+                                {% if not ai_status.available %}disabled{% endif %}
+                            ></textarea>
+                            <div class="assistant-form-actions">
+                                <div class="assistant-form-hint">按 Enter 发送，Shift + Enter 换行</div>
+                                <button type="submit" class="btn btn-primary" id="assistant-unified-send-btn" {% if not ai_status.available %}disabled{% endif %}>
+                                    发送请求
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="assistant-module">
+    <div class="card border-0">
+        <div class="card-body p-4 p-lg-5">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                <div>
+                    <h3 class="h5 fw-bold mb-1">LangChain 统一 Workflow</h3>
+                    <p class="text-secondary mb-0">点击节点查看当前统一对话链路里，每一步如何完成 operation_type 判断、结构化抽取、权限校验和受控执行。</p>
+                </div>
+                <span class="badge text-bg-light">Unified Assistant</span>
+            </div>
+            <div
+                class="assistant-workflow"
+                data-workflow-title="LangChain 统一 Workflow"
+                data-steps='{{ unified_workflow|tojson }}'
+            ></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='assistant.js') }}"></script>
+{% endblock %}

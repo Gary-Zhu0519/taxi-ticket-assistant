@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}新增处理日志 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">新增处理日志</h1>
+        <p class="text-secondary mb-0">填写处理动作与处理内容。已关闭工单不能新增处理日志，除非先重开。</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.ticket_detail', ticket_id=ticket.ticket_id) }}">返回工单详情</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card border-0">
+            <div class="card-body p-4">
+                <form method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">工单编号</label>
+                            <input class="form-control" type="text" value="{{ ticket.ticket_id }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">动作类型</label>
+                            <select class="form-select" name="action_type" required>
+                                <option value="">请选择动作类型</option>
+                                {% for action_type in action_types %}
+                                <option value="{{ action_type }}">{{ action_type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">处理内容</label>
+                            <textarea class="form-control" rows="7" name="action_content" placeholder="请填写处理进展、沟通结果、证据核查结论或补充说明。" required></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button class="btn btn-primary">提交处理日志</button>
+                        <a class="btn btn-outline-secondary" href="{{ url_for('main.ticket_detail', ticket_id=ticket.ticket_id) }}">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

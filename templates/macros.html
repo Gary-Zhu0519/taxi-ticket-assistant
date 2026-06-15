@@ -1,0 +1,57 @@
+{% macro render_status_badge(status) -%}
+<span class="badge rounded-pill app-badge
+    {%- if status == '待分派' -%} badge-soft-secondary
+    {%- elif status == '处理中' -%} badge-soft-primary
+    {%- elif status == '已升级' -%} badge-soft-warning
+    {%- elif status == '待反馈' -%} badge-soft-amber
+    {%- elif status == '已关闭' -%} badge-soft-success
+    {%- elif status == '已重开' -%} badge-soft-danger
+    {%- elif status == '已受理' -%} badge-soft-secondary
+    {%- elif status == '已完成' -%} badge-soft-success
+    {%- elif status == '进行中' -%} badge-soft-primary
+    {%- elif status == '已取消' -%} badge-soft-secondary
+    {%- elif status == '异常' -%} badge-soft-danger
+    {%- else -%} badge-soft-secondary
+    {%- endif -%}">
+    {{ status }}
+</span>
+{%- endmacro %}
+
+{% macro render_priority_badge(priority) -%}
+<span class="badge rounded-pill app-badge
+    {%- if priority == 'P1' -%} badge-soft-danger
+    {%- elif priority == 'P2' -%} badge-soft-warning
+    {%- elif priority == 'P3' -%} badge-soft-primary
+    {%- else -%} badge-soft-secondary
+    {%- endif -%}">
+    {{ priority }}
+</span>
+{%- endmacro %}
+
+{% macro render_urgency_badge(urgency) -%}
+<span class="badge rounded-pill app-badge
+    {%- if urgency == 'U1' -%} badge-soft-danger
+    {%- elif urgency == 'U2' -%} badge-soft-warning
+    {%- elif urgency == 'U3' -%} badge-soft-primary
+    {%- else -%} badge-soft-secondary
+    {%- endif -%}">
+    {{ urgency }}
+</span>
+{%- endmacro %}
+
+{% macro render_overdue_badge(is_overdue) -%}
+{% if is_overdue %}
+<span class="badge rounded-pill app-badge badge-soft-danger">已超时</span>
+{% else %}
+<span class="badge rounded-pill app-badge badge-soft-success">正常</span>
+{% endif %}
+{%- endmacro %}
+
+{% macro render_empty_state(title, detail='') -%}
+<div class="empty-state">
+    <div class="empty-state-title">{{ title }}</div>
+    {% if detail %}
+    <div class="empty-state-detail">{{ detail }}</div>
+    {% endif %}
+</div>
+{%- endmacro %}

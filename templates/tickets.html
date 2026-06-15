@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}{{ page_title }} - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">{{ page_title }}</h1>
+        <p class="text-secondary mb-0">{{ page_subtitle }}</p>
+    </div>
+</div>
+
+<div class="card filter-card border-0 mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">工单状态</label>
+                <select class="form-select" name="status">
+                    <option value="">全部</option>
+                    {% for status in ticket_statuses %}
+                    <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">责任部门</label>
+                <select class="form-select" name="department_id">
+                    <option value="">全部</option>
+                    {% for department in departments %}
+                    <option value="{{ department.department_id }}" {% if filters.department_id == department.department_id %}selected{% endif %}>{{ department.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">优先级</label>
+                <select class="form-select" name="priority">
+                    <option value="">全部</option>
+                    {% for priority in priority_choices %}
+                    <option value="{{ priority }}" {% if filters.priority == priority %}selected{% endif %}>{{ priority }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">投诉类型</label>
+                <select class="form-select" name="complaint_type_id">
+                    <option value="">全部</option>
+                    {% for complaint_type in complaint_types %}
+                    <option value="{{ complaint_type.complaint_type_id }}" {% if filters.complaint_type_id == complaint_type.complaint_type_id %}selected{% endif %}>{{ complaint_type.type_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-primary flex-fill">搜索</button>
+                <a class="btn btn-outline-secondary flex-fill" href="{{ url_for('main.tickets') }}">重置</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>工单编号</th>
+                        <th>投诉类型</th>
+                        <th>责任部门</th>
+                        <th>当前负责人</th>
+                        <th>优先级</th>
+                        <th>状态</th>
+                        <th>SLA 截止时间</th>
+                        <th>是否超时</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if tickets %}
+                        {% for ticket in tickets %}
+                        <tr class="{% if is_ticket_overdue(ticket) %}table-overdue{% endif %}">
+                            <td><a href="{{ url_for('main.ticket_detail', ticket_id=ticket.ticket_id) }}">{{ ticket.ticket_id }}</a></td>
+                            <td>{{ ticket.complaint.complaint_type.type_name }}</td>
+                            <td>{{ ticket.department.department_name }}</td>
+                            <td>{{ ticket.current_owner.employee_name if ticket.current_owner else '未分派' }}</td>
+                            <td>
+                                {{ ui.render_priority_badge(ticket.priority_level) }}
+                                {% if ticket.priority_level == 'P1' %}
+                                <div class="small text-danger mt-1 fw-semibold">高优先级</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ ui.render_status_badge(ticket.ticket_status) }}</td>
+                            <td>{{ ticket.sla_deadline | datetime_display }}</td>
+                            <td>{{ ui.render_overdue_badge(is_ticket_overdue(ticket)) }}</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.ticket_detail', ticket_id=ticket.ticket_id) }}">查看详情</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="9">{{ ui.render_empty_state('暂无工单数据', '请尝试调整筛选条件。') }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

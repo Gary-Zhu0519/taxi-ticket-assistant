@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# 数据库文件（本地 SQLite）
+*.db
+*.sqlite3
+
+# 日志
+*.log
+server.out.log
+server.err.log
+
+# 临时/调试文件
+tmp_*
+scripts/examples_live_backup.json
+instance/
+
+# 环境变量（含 API Key 等敏感信息）
+.env
+.env.local
+
+# 打包
+*.zip
+
+# OS
+Thumbs.db
+.DS_Store

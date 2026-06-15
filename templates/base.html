@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ system_name }}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    {% if current_user %}
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar shadow-sm">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-semibold" href="{{ url_for('main.index') }}">订单投诉与工单闭环系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="topNav">
+                <div class="ms-auto d-flex align-items-center gap-3 text-white small">
+                    <div class="text-end">
+                        <div class="fw-semibold">{{ current_user.employee_name }}</div>
+                        <div class="opacity-75">{{ current_user.role_label }}</div>
+                    </div>
+                    <a class="btn btn-sm btn-outline-light" href="{{ url_for('auth.logout') }}">退出登录</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid px-4 py-4">
+        <div class="app-shell">
+            <aside class="app-sidebar">
+                <div class="sidebar-user-card">
+                    <div class="small text-muted mb-1">当前登录用户</div>
+                    <div class="fw-semibold">{{ current_user.employee_name }}</div>
+                    <div class="small text-muted">{{ current_user.role_label }}</div>
+                </div>
+                <div class="sidebar-title">功能导航</div>
+                <div class="sidebar-menu">
+                    {% for item in sidebar_menu %}
+                    {% set is_root = item.match_prefix == '/' %}
+                    {% set active = (request.path == '/' if is_root else request.path.startswith(item.match_prefix)) %}
+                    <a class="sidebar-link {% if active %}active{% endif %}" href="{{ item.url }}">
+                        <span>{{ item.label }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                <div class="sidebar-footer">
+                    <div class="fw-semibold">课程设计项目</div>
+                    <div>第三方打车平台后台订单投诉与工单闭环管理系统</div>
+                </div>
+            </aside>
+            <div class="content-column">
+    {% else %}
+    <main class="container-fluid px-4 py-4">
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mb-3 {% if not current_user %}mx-auto{% endif %}" {% if not current_user %}style="max-width: 1080px;"{% endif %}>
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    {% if current_user %}
+                <div class="app-footer text-center pt-4">
+                    第三方打车平台后台订单投诉与工单闭环管理系统
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        <div class="text-center footer-muted mt-4">数据库课程设计展示项目</div>
+    </main>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

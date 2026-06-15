@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}统计看板 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">统计看板</h1>
+        <p class="text-secondary mb-0">仅管理员和主管可见，用于展示部门统计、投诉类型分布、优先级分布和高优先级工单。</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-xl">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label">工单总数</div>
+                <div class="metric-value">{{ dashboard_stats.total_tickets }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label">处理中工单</div>
+                <div class="metric-value">{{ dashboard_stats.processing_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label">已关闭工单</div>
+                <div class="metric-value text-success">{{ dashboard_stats.closed_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label">超时工单</div>
+                <div class="metric-value text-danger">{{ dashboard_stats.overdue_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label">平均满意度</div>
+                <div class="metric-value">{{ dashboard_stats.avg_satisfaction if dashboard_stats.avg_satisfaction else '-' }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 mb-4">
+    <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">部门工单统计表</h2>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>部门名称</th>
+                        <th>总工单数</th>
+                        <th>处理中数量</th>
+                        <th>已关闭数量</th>
+                        <th>超时数量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in department_summary %}
+                    <tr>
+                        <td>{{ row.department_name }}</td>
+                        <td>{{ row.total_tickets }}</td>
+                        <td>{{ row.processing_tickets }}</td>
+                        <td class="text-success fw-semibold">{{ row.closed_tickets }}</td>
+                        <td class="{% if row.overdue_tickets %}text-danger fw-semibold{% endif %}">{{ row.overdue_tickets }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">投诉类型统计表</h2>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>投诉类型</th>
+                                <th>投诉数量</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for type_name, count in complaint_type_counts %}
+                            <tr>
+                                <td>{{ type_name }}</td>
+                                <td>{{ count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">优先级统计表</h2>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>优先级</th>
+                                <th>工单数量</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for priority, count in priority_counts %}
+                            <tr>
+                                <td>{{ ui.render_priority_badge(priority) }}</td>
+                                <td>{{ count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">投诉类型柱状图</h2>
+                <canvas id="complaintTypeChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">优先级分布图</h2>
+                <canvas id="priorityChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 mb-4">
+    <div class="card-body p-4">
+        <div class="page-header mb-3">
+            <div>
+                <h2 class="h5 fw-bold mb-1">P1 高优先级工单表</h2>
+                <p class="text-secondary mb-0">重点展示高优先级和安全风险相关工单。</p>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>工单编号</th>
+                        <th>投诉类型</th>
+                        <th>责任部门</th>
+                        <th>负责人</th>
+                        <th>SLA 截止时间</th>
+                        <th>状态</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if p1_tickets %}
+                        {% for ticket in p1_tickets %}
+                        <tr class="{% if is_ticket_overdue(ticket) %}table-overdue{% endif %}">
+                            <td>{{ ticket.ticket_id }}</td>
+                            <td>{{ ticket.complaint.complaint_type.type_name }}</td>
+                            <td>{{ ticket.department.department_name }}</td>
+                            <td>{{ ticket.current_owner.employee_name if ticket.current_owner else '未分派' }}</td>
+                            <td>{{ ticket.sla_deadline | datetime_display }}</td>
+                            <td>{{ ui.render_status_badge(ticket.ticket_status) }}</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.ticket_detail', ticket_id=ticket.ticket_id) }}">查看详情</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="7">{{ ui.render_empty_state('暂无 P1 高优先级工单') }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0">
+    <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">最近反馈结果</h2>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>工单编号</th>
+                        <th>订单编号</th>
+                        <th>乘客</th>
+                        <th>投诉类型</th>
+                        <th>满意度</th>
+                        <th>反馈时间</th>
+                        <th>反馈内容</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if feedback_rows %}
+                        {% for row in feedback_rows %}
+                        <tr>
+                            <td>{{ row.ticket_id }}</td>
+                            <td>{{ row.order_id }}</td>
+                            <td>{{ row.passenger_name }}</td>
+                            <td>{{ row.type_name }}</td>
+                            <td>
+                                {% if row.satisfaction_score < 3 %}
+                                <span class="badge rounded-pill app-badge badge-soft-danger">{{ row.satisfaction_score }}</span>
+                                {% else %}
+                                <span class="badge rounded-pill app-badge badge-soft-success">{{ row.satisfaction_score }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ row.feedback_time | datetime_display }}</td>
+                            <td>{{ row.feedback_content }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="7">{{ ui.render_empty_state('暂无反馈结果') }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const complaintTypeLabels = {{ complaint_type_counts | map(attribute=0) | list | tojson }};
+const complaintTypeValues = {{ complaint_type_counts | map(attribute=1) | list | tojson }};
+const priorityLabels = {{ priority_counts | map(attribute=0) | list | tojson }};
+const priorityValues = {{ priority_counts | map(attribute=1) | list | tojson }};
+
+new Chart(document.getElementById('complaintTypeChart'), {
+    type: 'bar',
+    data: {
+        labels: complaintTypeLabels,
+        datasets: [{
+            label: '投诉数量',
+            data: complaintTypeValues,
+            backgroundColor: ['#1f4f82', '#2f7bc4', '#f59e0b', '#dc2626', '#10b981', '#64748b', '#f97316']
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+});
+
+new Chart(document.getElementById('priorityChart'), {
+    type: 'doughnut',
+    data: {
+        labels: priorityLabels,
+        datasets: [{
+            data: priorityValues,
+            backgroundColor: ['#dc2626', '#f59e0b', '#2563eb', '#94a3b8']
+        }]
+    }
+});
+</script>
+{% endblock %}

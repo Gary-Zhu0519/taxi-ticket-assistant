@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}订单管理 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">订单列表</h1>
+        <p class="text-secondary mb-0">订单只是投诉背景，不实现完整打车流程。可从订单详情进入投诉登记。</p>
+    </div>
+</div>
+
+<div class="card filter-card border-0 mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-5">
+                <label class="form-label">搜索订单</label>
+                <input class="form-control" type="text" name="q" value="{{ search_query }}" placeholder="可按订单编号、乘客姓名、司机姓名查询">
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary">搜索</button>
+            </div>
+            <div class="col-auto">
+                <a class="btn btn-outline-secondary" href="{{ url_for('main.orders') }}">重置</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>订单编号</th>
+                        <th>乘客姓名</th>
+                        <th>司机姓名</th>
+                        <th>起点</th>
+                        <th>终点</th>
+                        <th>订单金额</th>
+                        <th>订单状态</th>
+                        <th>订单时间</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if orders %}
+                        {% for order in orders %}
+                        <tr>
+                            <td><a href="{{ url_for('main.order_detail', order_id=order.order_id) }}">{{ order.order_id }}</a></td>
+                            <td>{{ order.passenger.passenger_name }}</td>
+                            <td>{{ order.driver.driver_name }}</td>
+                            <td>{{ order.start_location }}</td>
+                            <td>{{ order.end_location }}</td>
+                            <td>{{ order.order_amount | currency }}</td>
+                            <td>{{ ui.render_status_badge(order.order_status) }}</td>
+                            <td>{{ order.order_time | datetime_display }}</td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-2">
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.order_detail', order_id=order.order_id) }}">查看详情</a>
+                                    {% if can_create_complaint %}
+                                    <a class="btn btn-sm btn-primary" href="{{ url_for('main.complaint_new', order_id=order.order_id) }}">创建投诉</a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="9">{{ ui.render_empty_state('暂无订单数据', '请调整搜索条件后重试。') }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

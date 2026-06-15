@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}工单详情 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">工单详情</h1>
+        <p class="text-secondary mb-0">本页重点展示订单投诉工单的完整闭环流程，适合课程答辩演示。</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% if can_assign %}
+        <a class="btn btn-primary" href="{{ url_for('main.assign_ticket_view', ticket_id=ticket.ticket_id) }}">分派工单</a>
+        {% endif %}
+        {% if can_escalate %}
+        <a class="btn btn-outline-warning" href="{{ url_for('main.escalate_ticket_view', ticket_id=ticket.ticket_id) }}">升级工单</a>
+        {% endif %}
+        {% if can_add_log_flag %}
+        <a class="btn btn-outline-primary" href="{{ url_for('main.add_log_view', ticket_id=ticket.ticket_id) }}">新增处理日志</a>
+        {% endif %}
+        {% if can_pending_feedback %}
+        <form method="post" action="{{ url_for('main.pending_feedback', ticket_id=ticket.ticket_id) }}">
+            <button class="btn btn-outline-success">设为待反馈</button>
+        </form>
+        {% endif %}
+        {% if can_feedback %}
+        <a class="btn btn-success" href="{{ url_for('main.feedback_view', ticket_id=ticket.ticket_id) }}">提交反馈</a>
+        {% endif %}
+        {% if can_reopen %}
+        <form method="post" action="{{ url_for('main.reopen_ticket_view', ticket_id=ticket.ticket_id) }}">
+            <button class="btn btn-outline-danger">重开工单</button>
+        </form>
+        {% endif %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('main.tickets') }}">返回列表</a>
+    </div>
+</div>
+
+<div class="card border-0 mb-4">
+    <div class="card-body p-4">
+        <div class="page-header mb-3">
+            <div>
+                <h2 class="h5 fw-bold mb-1">工单摘要</h2>
+                <p class="text-secondary mb-0">展示工单编号、优先级、状态、责任部门、负责人、SLA 和超时情况。</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                {{ ui.render_priority_badge(ticket.priority_level) }}
+                {{ ui.render_status_badge(ticket.ticket_status) }}
+                {{ ui.render_overdue_badge(is_ticket_overdue(ticket)) }}
+            </div>
+        </div>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="summary-item-label">工单编号</div>
+                <div class="summary-item-value">{{ ticket.ticket_id }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">责任部门</div>
+                <div class="summary-item-value">{{ ticket.department.department_name }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">当前负责人</div>
+                <div class="summary-item-value">{{ ticket.current_owner.employee_name if ticket.current_owner else '未分派' }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">创建时间</div>
+                <div class="summary-item-value">{{ ticket.create_time | datetime_display }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">SLA 截止时间</div>
+                <div class="summary-item-value">{{ ticket.sla_deadline | datetime_display }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">关闭时间</div>
+                <div class="summary-item-value">{{ ticket.close_time | datetime_display }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">订单信息</h2>
+                <div class="detail-grid compact">
+                    <div><span>订单编号</span><strong><a href="{{ url_for('main.order_detail', order_id=ticket.complaint.order.order_id) }}">{{ ticket.complaint.order.order_id }}</a></strong></div>
+                    <div><span>乘客</span><strong>{{ ticket.complaint.order.passenger.passenger_name }}</strong></div>
+                    <div><span>司机</span><strong>{{ ticket.complaint.order.driver.driver_name }}</strong></div>
+                    <div><span>起点</span><strong>{{ ticket.complaint.order.start_location }}</strong></div>
+                    <div><span>终点</span><strong>{{ ticket.complaint.order.end_location }}</strong></div>
+                    <div><span>订单金额</span><strong>{{ ticket.complaint.order.order_amount | currency }}</strong></div>
+                    <div><span>订单状态</span><strong>{{ ui.render_status_badge(ticket.complaint.order.order_status) }}</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">投诉信息</h2>
+                <div class="detail-grid compact">
+                    <div><span>投诉编号</span><strong>{{ ticket.complaint.complaint_id }}</strong></div>
+                    <div><span>投诉类型</span><strong>{{ ticket.complaint.complaint_type.type_name }}</strong></div>
+                    <div><span>紧急程度</span><strong>{{ ui.render_urgency_badge(ticket.complaint.urgency_level) }}</strong></div>
+                    <div><span>投诉时间</span><strong>{{ ticket.complaint.complaint_time | datetime_display }}</strong></div>
+                    <div><span>投诉状态</span><strong>{{ ui.render_status_badge(ticket.complaint.complaint_status) }}</strong></div>
+                </div>
+                <div class="note-panel mt-3">
+                    <div class="fw-semibold mb-2">投诉内容</div>
+                    <div>{{ ticket.complaint.complaint_content }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">分派记录</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>分派时间</th>
+                                <th>分派人</th>
+                                <th>接收人</th>
+                                <th>接收部门</th>
+                                <th>备注</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if ticket.assignments %}
+                                {% for record in ticket.assignments %}
+                                <tr>
+                                    <td>{{ record.assign_time | datetime_display }}</td>
+                                    <td>{{ record.assigner.employee_name }}</td>
+                                    <td>{{ record.receiver.employee_name }}</td>
+                                    <td>{{ record.department.department_name }}</td>
+                                    <td>{{ record.assignment_note or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                            <tr><td colspan="5">{{ ui.render_empty_state('暂无分派记录') }}</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">升级记录</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>升级时间</th>
+                                <th>原层级</th>
+                                <th>目标层级</th>
+                                <th>升级人</th>
+                                <th>升级原因</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if ticket.escalations %}
+                                {% for record in ticket.escalations %}
+                                <tr>
+                                    <td>{{ record.escalation_time | datetime_display }}</td>
+                                    <td>{{ record.from_level }}</td>
+                                    <td>{{ record.to_level }}</td>
+                                    <td>{{ record.escalated_by_employee.employee_name }}</td>
+                                    <td>{{ record.escalation_reason }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                            <tr><td colspan="5">{{ ui.render_empty_state('暂无升级记录') }}</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 mb-4">
+    <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">处理日志时间线</h2>
+        {% if ticket.action_logs %}
+        <div class="timeline">
+            {% for log in ticket.action_logs %}
+            <div class="timeline-item">
+                <div class="timeline-point"></div>
+                <div class="timeline-content">
+                    <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+                        <div class="fw-semibold">{{ log.action_type }}</div>
+                        <div class="text-muted small">{{ log.action_time | datetime_display }} / {{ log.employee.employee_name }}</div>
+                    </div>
+                    <div class="text-secondary">{{ log.action_content }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        {{ ui.render_empty_state('暂无处理日志') }}
+        {% endif %}
+    </div>
+</div>
+
+<div class="card border-0">
+    <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">客户反馈</h2>
+        {% if ticket.feedback %}
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="feedback-pill">
+                    <div class="small text-muted">满意度评分</div>
+                    <div class="display-5 fw-bold">{{ ticket.feedback.satisfaction_score }}</div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="detail-grid compact mb-3">
+                    <div><span>反馈时间</span><strong>{{ ticket.feedback.feedback_time | datetime_display }}</strong></div>
+                    <div><span>反馈乘客</span><strong>{{ ticket.feedback.passenger.passenger_name }}</strong></div>
+                </div>
+                <div class="alert {% if ticket.feedback.satisfaction_score < 3 %}alert-danger low-score-alert{% else %}alert-success{% endif %} mb-0">
+                    <div class="fw-semibold mb-1">反馈内容</div>
+                    <div>{{ ticket.feedback.feedback_content }}</div>
+                    {% if ticket.feedback.satisfaction_score < 3 %}
+                    <div class="mt-2 fw-semibold">低满意度，建议复核。</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        {{ ui.render_empty_state('暂无反馈记录') }}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

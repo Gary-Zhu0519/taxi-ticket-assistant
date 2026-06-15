@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}数据库设计说明 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">数据库设计说明</h1>
+        <p class="text-secondary mb-0">本页用于课程答辩展示系统定位、核心 workflow、12 张表、ER 关系、视图、索引和权限设计。</p>
+    </div>
+</div>
+
+<div class="card border-0 mb-4">
+    <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">系统定位</h2>
+        <div class="note-panel">
+            本系统不是完整打车前台平台，不实现实时派单、路线规划、动态计价、在线支付或司机接单。系统重点是后台投诉受理、工单流转、升级和反馈闭环。
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 mb-4">
+    <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">ER 图</h2>
+        <p class="text-secondary mb-3">点击实体节点可查看字段说明，点击关系线或右侧关系按钮可查看基数和业务含义。当前展示的是与系统实现一致的物理 ER 图，移动端会自动切换为卡片浏览。</p>
+        <div class="er-toolbar mb-3">
+            <div class="small text-secondary" id="er-current-mode">当前模式：物理实现 ER 图</div>
+            <div class="er-group-legend">
+                <span class="er-legend-dot is-foundation"></span><span>基础背景</span>
+                <span class="er-legend-dot is-case"></span><span>投诉与工单主线</span>
+                <span class="er-legend-dot is-org"></span><span>组织与权限</span>
+                <span class="er-legend-dot is-process"></span><span>闭环过程</span>
+                <span class="er-legend-dot is-rule"></span><span>规则字典</span>
+            </div>
+        </div>
+        <div
+            class="er-board"
+            id="er-board"
+            data-entities='{{ er_entities | tojson }}'
+            data-relations='{{ er_relations | tojson }}'
+        >
+            <div class="er-stage-wrap">
+                <svg class="er-stage" id="er-stage" viewBox="0 0 1360 760" role="img" aria-label="ER diagram interactive board"></svg>
+            </div>
+            <div class="er-side-panel">
+                <div class="er-detail-card" id="er-detail-card">
+                    <div class="er-detail-kicker">当前选中</div>
+                    <h3 class="h5 fw-bold mb-2" id="er-detail-title">Ticket</h3>
+                    <p class="text-secondary mb-3" id="er-detail-description">点击左侧实体或关系查看详细信息。</p>
+                    <div class="er-detail-block mb-3">
+                        <div class="fw-semibold mb-2">主键 / 外键</div>
+                        <div class="small text-secondary" id="er-detail-keys">主键：ticket_id</div>
+                    </div>
+                    <div class="er-detail-block mb-3">
+                        <div class="fw-semibold mb-2">字段</div>
+                        <div class="er-chip-list" id="er-detail-fields"></div>
+                    </div>
+                    <div class="er-detail-block">
+                        <div class="fw-semibold mb-2">相关关系</div>
+                        <div class="er-chip-list" id="er-detail-relations"></div>
+                    </div>
+                </div>
+                <div class="er-legend-card mt-3">
+                    <div class="fw-semibold mb-2">图例</div>
+                    <div class="small text-secondary mb-2">蓝色节点：核心业务实体</div>
+                    <div class="small text-secondary mb-2">浅蓝节点：支撑实体</div>
+                    <div class="small text-secondary">点击关系可查看 1:1、1:N、1:0..1 等基数说明。</div>
+                </div>
+            </div>
+        </div>
+        <div class="er-mobile-list mt-4" id="er-mobile-list"></div>
+    </div>
+</div>
+
+<div class="card border-0 mb-4">
+    <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">核心 Workflow</h2>
+        <ol class="mb-0">
+            {% for step in workflow_steps %}
+            <li class="mb-2">{{ step }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+</div>
+
+<div class="card border-0 mb-4">
+    <div class="card-body p-4">
+        <h2 class="h5 fw-bold mb-3">12 张核心表清单</h2>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>英文表名</th>
+                        <th>中文名称</th>
+                        <th>主键</th>
+                        <th>外键</th>
+                        <th>作用</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in schema_tables %}
+                    <tr>
+                        <td><code>{{ item.name }}</code></td>
+                        <td>{{ item.title }}</td>
+                        <td>{{ item.pk }}</td>
+                        <td>{{ item.fks }}</td>
+                        <td>{{ item.description }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">核心关系</h2>
+                <ul class="mb-0">
+                    {% for item in core_relationships %}
+                    <li class="mb-2">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">权限设计</h2>
+                <ul class="mb-0">
+                    {% for role, description in role_permission_details %}
+                    <li class="mb-2"><code>{{ role }}</code>：{{ description }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">视图设计</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>视图名</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for name, description in schema_view_details %}
+                            <tr>
+                                <td><code>{{ name }}</code></td>
+                                <td>{{ description }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">索引设计</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>索引名</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for name, description in schema_index_details %}
+                            <tr>
+                                <td><code>{{ name }}</code></td>
+                                <td>{{ description }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='schema_er.js') }}?v=20260608c"></script>
+{% endblock %}

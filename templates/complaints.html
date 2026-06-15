@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}投诉管理 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">投诉列表</h1>
+        <p class="text-secondary mb-0">投诉表记录乘客提出的原始问题，投诉创建后系统会自动生成对应工单。</p>
+    </div>
+</div>
+
+<div class="card border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>投诉编号</th>
+                        <th>订单编号</th>
+                        <th>投诉类型</th>
+                        <th>紧急程度</th>
+                        <th>投诉状态</th>
+                        <th>投诉时间</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if complaints %}
+                        {% for complaint in complaints %}
+                        <tr>
+                            <td>{{ complaint.complaint_id }}</td>
+                            <td>{{ complaint.order_id }}</td>
+                            <td>{{ complaint.complaint_type.type_name }}</td>
+                            <td>{{ ui.render_urgency_badge(complaint.urgency_level) }}</td>
+                            <td>{{ ui.render_status_badge(complaint.complaint_status) }}</td>
+                            <td>{{ complaint.complaint_time | datetime_display }}</td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-2">
+                                    {% if complaint.ticket %}
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.ticket_detail', ticket_id=complaint.ticket.ticket_id) }}">查看关联工单</a>
+                                    {% endif %}
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('main.order_detail', order_id=complaint.order_id) }}">查看订单</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="7">{{ ui.render_empty_state('暂无投诉记录') }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

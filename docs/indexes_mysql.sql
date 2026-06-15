@@ -1,0 +1,12 @@
+CREATE INDEX idx_order_passenger ON ride_order(passenger_id);
+CREATE INDEX idx_order_driver ON ride_order(driver_id);
+CREATE INDEX idx_complaint_order ON complaint(order_id);
+CREATE INDEX idx_complaint_type ON complaint(complaint_type_id);
+CREATE INDEX idx_ticket_complaint ON ticket(complaint_id);
+CREATE INDEX idx_ticket_status ON ticket(ticket_status);
+CREATE INDEX idx_ticket_owner ON ticket(current_owner_id);
+CREATE INDEX idx_ticket_department ON ticket(department_id);
+CREATE INDEX idx_assignment_ticket ON assignment_record(ticket_id);
+CREATE INDEX idx_escalation_ticket ON escalation_record(ticket_id);
+CREATE INDEX idx_action_ticket ON action_log(ticket_id);
+CREATE INDEX idx_feedback_ticket ON feedback(ticket_id);

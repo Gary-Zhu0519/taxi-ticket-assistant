@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+{% block title %}首页 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">后台首页</h1>
+        <p class="text-secondary mb-0">欢迎，{{ current_user.employee_name }}。当前角色为 {{ current_user.role_label }}，数据权限范围：{{ scope_name }}。</p>
+    </div>
+</div>
+
+<div class="hero-card card border-0 mb-4">
+    <div class="card-body p-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-8">
+                <div class="small text-uppercase text-muted mb-2">课程设计后台管理系统</div>
+                <h2 class="h4 fw-bold mb-2">订单作为投诉背景，工单驱动处理闭环</h2>
+                <p class="text-secondary mb-0">系统从订单投诉受理出发，贯穿工单生成、分派、处理日志、升级、待反馈和满意度评价，适合课程答辩时展示完整业务流程。</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-item-label">当前用户</div>
+                        <div class="summary-item-value">{{ current_user.employee_name }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">当前角色</div>
+                        <div class="summary-item-value">{{ current_user.role_label }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">我的待办</div>
+                        <div class="summary-item-value">{{ my_pending_count }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">平均满意度</div>
+                        <div class="summary-item-value">{{ stats.average_score if stats.average_score else '-' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label">今日新增投诉数量</div>
+                <div class="metric-value">{{ today_new_complaints }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label">待处理工单数量</div>
+                <div class="metric-value">{{ pending_ticket_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label">超时工单数量</div>
+                <div class="metric-value text-danger">{{ stats.overdue_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label">已关闭工单数量</div>
+                <div class="metric-value text-success">{{ stats.closed_count }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if quick_actions %}
+<div class="card border-0 mb-4">
+    <div class="card-body p-4">
+        <div class="page-header mb-3">
+            <div>
+                <h2 class="h5 fw-bold mb-1">快捷入口</h2>
+                <p class="text-secondary mb-0">根据当前角色展示可直接进入的常用操作。</p>
+            </div>
+        </div>
+        <div class="row g-3">
+            {% for action in quick_actions %}
+            <div class="col-md-6 col-xl-3">
+                <a class="quick-link-card" href="{{ url_for(action.endpoint) }}">
+                    <div class="quick-link-tag text-{{ action.style }}">{{ action.title }}</div>
+                    <div class="fw-semibold mb-2">{{ action.title }}</div>
+                    <div class="text-secondary small">{{ action.description }}</div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card border-0">
+    <div class="card-body p-4">
+        <div class="page-header mb-3">
+            <div>
+                <h2 class="h5 fw-bold mb-1">{{ preview_title }}</h2>
+                <p class="text-secondary mb-0">首页预览当前角色常用视图数据，便于答辩演示不同角色的数据范围。</p>
+            </div>
+            <a class="btn btn-outline-primary" href="{{ url_for('main.tickets') }}">进入工单管理</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        {% for column_key, column_label in preview_columns %}
+                        <th>{{ column_label }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if preview_rows %}
+                        {% for row in preview_rows %}
+                        <tr>
+                            {% for column_key, column_label in preview_columns %}
+                            <td>
+                                {% if column_key == "ticket_status" %}
+                                {{ ui.render_status_badge(row[column_key]) }}
+                                {% elif column_key == "priority_level" %}
+                                {{ ui.render_priority_badge(row[column_key]) }}
+                                {% elif "time" in column_key or "deadline" in column_key %}
+                                {{ row[column_key] | datetime_display }}
+                                {% else %}
+                                {{ row[column_key] }}
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="{{ preview_columns|length }}">{{ ui.render_empty_state('暂无预览数据') }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

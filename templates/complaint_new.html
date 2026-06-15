@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}新增投诉 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">新增投诉</h1>
+        <p class="text-secondary mb-0">基于订单录入投诉信息，提交后系统自动生成后台工单。</p>
+    </div>
+    {% if order %}
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.order_detail', order_id=order.order_id) }}">返回订单详情</a>
+    {% else %}
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.orders') }}">返回订单列表</a>
+    {% endif %}
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card border-0">
+            <div class="card-body p-4">
+                <form method="post">
+                    {% if order %}
+                    <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                    {% endif %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">订单编号</label>
+                            {% if order %}
+                            <input class="form-control" type="text" value="{{ order.order_id }}" readonly>
+                            {% else %}
+                            <select class="form-select" name="order_id" required>
+                                <option value="">请选择订单</option>
+                                {% for item in selectable_orders %}
+                                <option value="{{ item.order_id }}">{{ item.order_id }} / {{ item.passenger.passenger_name }} / {{ item.driver.driver_name }}</option>
+                                {% endfor %}
+                            </select>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">投诉类型</label>
+                            <select class="form-select" name="complaint_type_id" required>
+                                <option value="">请选择投诉类型</option>
+                                {% for complaint_type in complaint_types %}
+                                <option value="{{ complaint_type.complaint_type_id }}">{{ complaint_type.type_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">紧急程度</label>
+                            <select class="form-select" name="urgency_level" required>
+                                <option value="">请选择紧急程度</option>
+                                {% for urgency in urgency_choices %}
+                                <option value="{{ urgency }}">{{ urgency }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">投诉内容</label>
+                            <textarea class="form-control" rows="7" name="complaint_content" placeholder="请填写投诉内容，例如事件经过、诉求、金额争议、司机服务问题等。" required></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button class="btn btn-primary">提交投诉并生成工单</button>
+                        {% if order %}
+                        <a class="btn btn-outline-secondary" href="{{ url_for('main.order_detail', order_id=order.order_id) }}">取消</a>
+                        {% else %}
+                        <a class="btn btn-outline-secondary" href="{{ url_for('main.orders') }}">取消</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card border-0 h-100">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">订单背景</h2>
+                {% if order %}
+                <div class="detail-grid compact mb-4">
+                    <div><span>乘客</span><strong>{{ order.passenger.passenger_name }}</strong></div>
+                    <div><span>司机</span><strong>{{ order.driver.driver_name }}</strong></div>
+                    <div><span>起点</span><strong>{{ order.start_location }}</strong></div>
+                    <div><span>终点</span><strong>{{ order.end_location }}</strong></div>
+                    <div><span>订单状态</span><strong>{{ order.order_status }}</strong></div>
+                </div>
+                {% else %}
+                <div class="note-panel mb-4">
+                    <div class="fw-semibold mb-2">请先选择订单</div>
+                    <div>当前页面支持直接打开进行课程演示和烟测。未指定订单时，可先从下拉框选择测试订单，再继续填写投诉信息。</div>
+                </div>
+                {% endif %}
+                <div class="note-panel">
+                    <div class="fw-semibold mb-2">提示</div>
+                    <div>提交投诉后，系统将自动生成后台工单。</div>
+                    <div class="mt-2">工单默认部门、优先级和 SLA 来自投诉类型表。</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}升级工单 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">升级工单</h1>
+        <p class="text-secondary mb-0">升级后，工单状态将变为“已升级”。适用于高优先级、复杂或超时工单。</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.ticket_detail', ticket_id=ticket.ticket_id) }}">返回工单详情</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card border-0">
+            <div class="card-body p-4">
+                <form method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">工单编号</label>
+                            <input class="form-control" type="text" value="{{ ticket.ticket_id }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">原处理层级</label>
+                            <input class="form-control" type="text" name="from_level" value="{{ default_from_level }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">目标处理层级</label>
+                            <select class="form-select" name="to_level" required>
+                                <option value="">请选择目标处理层级</option>
+                                {% for option in to_level_options %}
+                                <option value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">升级原因</label>
+                            <textarea class="form-control" rows="6" name="escalation_reason" placeholder="请填写升级原因，例如责任不清、存在安全风险、跨部门协同等。" required></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button class="btn btn-warning">提交升级</button>
+                        <a class="btn btn-outline-secondary" href="{{ url_for('main.ticket_detail', ticket_id=ticket.ticket_id) }}">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

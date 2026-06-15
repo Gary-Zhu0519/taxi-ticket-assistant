@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}错误 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-lg-6">
+        <div class="card border-0">
+            <div class="card-body p-5 text-center">
+                <div class="display-4 fw-bold mb-3">{{ code }}</div>
+                <p class="text-secondary mb-4">{{ message }}</p>
+                <a class="btn btn-primary" href="{{ url_for('main.index') if current_user else url_for('auth.login') }}">返回系统</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

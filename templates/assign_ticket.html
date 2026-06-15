@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}分派工单 - {{ system_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h3 fw-bold">分派工单</h1>
+        <p class="text-secondary mb-0">分派后，系统会自动更新工单当前负责人、责任部门和状态。</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.ticket_detail', ticket_id=ticket.ticket_id) }}">返回工单详情</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card border-0">
+            <div class="card-body p-4">
+                <form method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">当前工单编号</label>
+                            <input class="form-control" type="text" value="{{ ticket.ticket_id }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">当前责任部门</label>
+                            <input class="form-control" type="text" value="{{ ticket.department.department_name }}" readonly>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">接收员工</label>
+                            <select class="form-select" name="receiver_id" required>
+                                <option value="">请选择接收员工</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.employee_id }}">{{ employee.department.department_name }} / {{ employee.employee_name }} / {{ employee.role_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">分派备注</label>
+                            <textarea class="form-control" rows="5" name="assignment_note" placeholder="请填写分派说明，例如根据投诉类型转给对应部门进一步处理。"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button class="btn btn-primary">提交分派</button>
+                        <a class="btn btn-outline-secondary" href="{{ url_for('main.ticket_detail', ticket_id=ticket.ticket_id) }}">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
